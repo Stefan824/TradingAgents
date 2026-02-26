@@ -162,11 +162,11 @@ def _route_response(text: str) -> str:
     if "extract the investment decision" in t:
         return "BUY"
 
-    if "analyzing financial markets" in t or "technical indicator" in t:
+    if "analyzing financial markets" in t:
         return MOCK_MARKET_REPORT
-    if "social media" in t and "sentiment" in t and "analyst" not in t:
+    if "social media" in t and "company specific news" in t:
         return MOCK_SENTIMENT_REPORT
-    if "news" in t and "researcher" in t and "world affairs" in t:
+    if "news researcher" in t and "recent news and trends" in t:
         return MOCK_NEWS_REPORT
     if "fundamental information" in t or "financial documents" in t:
         return MOCK_FUNDAMENTALS_REPORT
@@ -208,6 +208,10 @@ class MockChatModel(BaseChatModel):
     @property
     def _llm_type(self) -> str:
         return "mock"
+
+    def bind_tools(self, tools: Any, **kwargs: Any) -> Any:
+        """Accept tool bindings without conversion (mock ignores tools)."""
+        return self.bind(tools=tools, **kwargs)
 
     def _generate(
         self,
