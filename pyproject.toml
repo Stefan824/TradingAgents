@@ -33,6 +33,9 @@ dependencies = [
     "yfinance>=0.2.63",
 ]
 
+[project.optional-dependencies]
+local = ["llama-cpp-python", "langchain-community"]
+
 [project.scripts]
 tradingagents = "cli.main:app"
 

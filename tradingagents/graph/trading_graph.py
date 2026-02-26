@@ -78,17 +78,23 @@ class TradingAgentsGraph:
         if self.callbacks:
             llm_kwargs["callbacks"] = self.callbacks
 
+        deep_kwargs = dict(llm_kwargs)
+        quick_kwargs = dict(llm_kwargs)
+        if self.config.get("llm_provider", "").lower() == "llamacpp":
+            deep_kwargs["model_path"] = self.config.get("local_model_path_deep")
+            quick_kwargs["model_path"] = self.config.get("local_model_path_quick")
+
         deep_client = create_llm_client(
             provider=self.config["llm_provider"],
             model=self.config["deep_think_llm"],
             base_url=self.config.get("backend_url"),
-            **llm_kwargs,
+            **deep_kwargs,
         )
         quick_client = create_llm_client(
             provider=self.config["llm_provider"],
             model=self.config["quick_think_llm"],
             base_url=self.config.get("backend_url"),
-            **llm_kwargs,
+            **quick_kwargs,
         )
 
         self.deep_thinking_llm = deep_client.get_llm()
@@ -144,6 +150,11 @@ class TradingAgentsGraph:
             reasoning_effort = self.config.get("openai_reasoning_effort")
             if reasoning_effort:
                 kwargs["reasoning_effort"] = reasoning_effort
+
+        elif provider == "llamacpp":
+            kwargs["n_gpu_layers"] = self.config.get("local_n_gpu_layers", -1)
+            kwargs["n_ctx"] = self.config.get("local_n_ctx", 4096)
+            kwargs["n_batch"] = self.config.get("local_n_batch", 512)
 
         return kwargs
 

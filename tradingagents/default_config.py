@@ -15,6 +15,12 @@ DEFAULT_CONFIG = {
     # Provider-specific thinking configuration
     "google_thinking_level": None,      # "high", "minimal", etc.
     "openai_reasoning_effort": None,    # "medium", "high", "low"
+    # Local inference settings (for llamacpp provider)
+    "local_model_path_deep": None,      # Path to GGUF file for deep thinking
+    "local_model_path_quick": None,     # Path to GGUF file for quick thinking
+    "local_n_gpu_layers": -1,           # -1 = all to GPU, 0 = CPU only
+    "local_n_ctx": 4096,                # Context window size
+    "local_n_batch": 512,               # Batch size for prompt processing
     # Debate and discussion settings
     "max_debate_rounds": 1,
     "max_risk_discuss_rounds": 1,

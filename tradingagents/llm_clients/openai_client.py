@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Any, Optional
 
@@ -5,6 +6,8 @@ from langchain_openai import ChatOpenAI
 
 from .base_client import BaseLLMClient
 from .validators import validate_model
+
+logger = logging.getLogger(__name__)
 
 
 class UnifiedChatOpenAI(ChatOpenAI):
@@ -57,7 +60,8 @@ class OpenAIClient(BaseLLMClient):
                 llm_kwargs["api_key"] = api_key
         elif self.provider == "ollama":
             llm_kwargs["base_url"] = "http://localhost:11434/v1"
-            llm_kwargs["api_key"] = "ollama"  # Ollama doesn't require auth
+            llm_kwargs["api_key"] = "ollama"
+            self._check_ollama(llm_kwargs["base_url"])
         elif self.base_url:
             llm_kwargs["base_url"] = self.base_url
 
@@ -66,6 +70,23 @@ class OpenAIClient(BaseLLMClient):
                 llm_kwargs[key] = self.kwargs[key]
 
         return UnifiedChatOpenAI(**llm_kwargs)
+
+    def _check_ollama(self, base_url: str) -> None:
+        """Log warnings if Ollama server or model is not available."""
+        from .local_utils import check_ollama_health, check_ollama_model
+
+        api_base = base_url.replace("/v1", "")
+        healthy, msg = check_ollama_health(api_base)
+        if not healthy:
+            logger.warning("Ollama: %s", msg)
+            return
+        if not check_ollama_model(self.model, api_base):
+            logger.warning(
+                "Ollama: model '%s' not found locally. "
+                "Pull it with: ollama pull %s",
+                self.model,
+                self.model,
+            )
 
     def validate_model(self) -> bool:
         """Validate model for the provider."""
