@@ -26,7 +26,12 @@ from rich.rule import Rule
 from tradingagents.graph.trading_graph import TradingAgentsGraph
 from tradingagents.default_config import DEFAULT_CONFIG
 from cli.models import AnalystType
-from cli.utils import *
+from cli.utils import (
+    get_ticker, get_analysis_date, select_analysts, select_research_depth,
+    select_llm_provider, select_shallow_thinking_agent, select_deep_thinking_agent,
+    ask_openai_reasoning_effort, ask_gemini_thinking_config,
+    configure_local_inference, check_local_readiness, format_tool_args,
+)
 from cli.announcements import fetch_announcements, display_announcements
 from cli.stats_handler import StatsCallbackHandler
 
@@ -536,14 +541,18 @@ def get_user_selections():
     )
     selected_research_depth = select_research_depth()
 
-    # Step 5: OpenAI backend
+    # Step 5: LLM Provider
     console.print(
         create_question_box(
-            "Step 5: OpenAI backend", "Select which service to talk to"
+            "Step 5: LLM Provider", "Select which service to talk to"
         )
     )
     selected_llm_provider, backend_url = select_llm_provider()
     
+    # Check local provider readiness
+    provider_lower = selected_llm_provider.lower()
+    check_local_readiness(provider_lower)
+
     # Step 6: Thinking agents
     console.print(
         create_question_box(
@@ -553,11 +562,11 @@ def get_user_selections():
     selected_shallow_thinker = select_shallow_thinking_agent(selected_llm_provider)
     selected_deep_thinker = select_deep_thinking_agent(selected_llm_provider)
 
-    # Step 7: Provider-specific thinking configuration
+    # Step 7: Provider-specific configuration
     thinking_level = None
     reasoning_effort = None
+    local_config = {}
 
-    provider_lower = selected_llm_provider.lower()
     if provider_lower == "google":
         console.print(
             create_question_box(
@@ -574,6 +583,14 @@ def get_user_selections():
             )
         )
         reasoning_effort = ask_openai_reasoning_effort()
+    elif provider_lower == "llamacpp (direct local)":
+        console.print(
+            create_question_box(
+                "Step 7: Local Inference",
+                "Configure GGUF model paths and inference settings"
+            )
+        )
+        local_config = configure_local_inference()
 
     return {
         "ticker": selected_ticker,
@@ -586,6 +603,7 @@ def get_user_selections():
         "deep_thinker": selected_deep_thinker,
         "google_thinking_level": thinking_level,
         "openai_reasoning_effort": reasoning_effort,
+        "local_config": local_config,
     }
 
 
@@ -907,10 +925,22 @@ def run_analysis():
     config["quick_think_llm"] = selections["shallow_thinker"]
     config["deep_think_llm"] = selections["deep_thinker"]
     config["backend_url"] = selections["backend_url"]
-    config["llm_provider"] = selections["llm_provider"].lower()
+    raw_provider = selections["llm_provider"].lower()
+    if raw_provider == "llamacpp (direct local)":
+        config["llm_provider"] = "llamacpp"
+    else:
+        config["llm_provider"] = raw_provider
     # Provider-specific thinking configuration
     config["google_thinking_level"] = selections.get("google_thinking_level")
     config["openai_reasoning_effort"] = selections.get("openai_reasoning_effort")
+
+    # Local inference configuration
+    local_cfg = selections.get("local_config", {})
+    if local_cfg:
+        config["local_model_path_quick"] = local_cfg.get("model_path_quick")
+        config["local_model_path_deep"] = local_cfg.get("model_path_deep")
+        config["local_n_gpu_layers"] = local_cfg.get("n_gpu_layers", -1)
+        config["local_n_ctx"] = local_cfg.get("n_ctx", 4096)
 
     # Create stats callback handler for tracking LLM/tool calls
     stats_handler = StatsCallbackHandler()

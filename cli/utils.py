@@ -1,7 +1,11 @@
 import questionary
-from typing import List, Optional, Tuple, Dict
+from typing import Dict, List, Optional, Tuple
+
+from rich.console import Console
 
 from cli.models import AnalystType
+
+console = Console()
 
 ANALYST_ORDER = [
     ("Market Analyst", AnalystType.MARKET),
@@ -160,6 +164,10 @@ def select_shallow_thinking_agent(provider) -> str:
             ("GPT-OSS:latest (20B, local)", "gpt-oss:latest"),
             ("GLM-4.7-Flash:latest (30B, local)", "glm-4.7-flash:latest"),
         ],
+        "llamacpp (direct local)": [
+            ("Qwen3-8B-Q4_K_M (~5GB, fast)", "qwen3-8b"),
+            ("Qwen3-4B-Q4_K_M (~3GB, ultra-light)", "qwen3-4b"),
+        ],
     }
 
     choice = questionary.select(
@@ -228,6 +236,11 @@ def select_deep_thinking_agent(provider) -> str:
             ("GPT-OSS:latest (20B, local)", "gpt-oss:latest"),
             ("Qwen3:latest (8B, local)", "qwen3:latest"),
         ],
+        "llamacpp (direct local)": [
+            ("Qwen3-30B-A3B-Q4_K_M (~18GB, MoE reasoning)", "qwen3-30b-a3b"),
+            ("Qwen3-14B-Q4_K_M (~9GB, dense reasoning)", "qwen3-14b"),
+            ("Qwen3-8B-Q4_K_M (~5GB, balanced)", "qwen3-8b"),
+        ],
     }
 
     choice = questionary.select(
@@ -262,6 +275,7 @@ def select_llm_provider() -> tuple[str, str]:
         ("xAI", "https://api.x.ai/v1"),
         ("Openrouter", "https://openrouter.ai/api/v1"),
         ("Ollama", "http://localhost:11434/v1"),
+        ("LlamaCpp (Direct Local)", "local"),
     ]
     
     choice = questionary.select(
@@ -306,6 +320,89 @@ def ask_openai_reasoning_effort() -> str:
             ("pointer", "fg:cyan noinherit"),
         ]),
     ).ask()
+
+
+def configure_local_inference() -> Dict[str, object]:
+    """Prompt user for local inference settings (llamacpp provider).
+
+    Returns dict with keys: model_path_quick, model_path_deep, n_gpu_layers, n_ctx.
+    """
+    console.print("[dim]Enter paths to your GGUF model files.[/dim]")
+
+    model_path_quick = questionary.path(
+        "Quick-thinking model (.gguf):",
+        validate=lambda p: p.strip().endswith(".gguf") or "Must be a .gguf file",
+        style=questionary.Style([("text", "fg:green"), ("highlighted", "noinherit")]),
+    ).ask()
+    if not model_path_quick:
+        console.print("[red]No model path provided. Exiting...[/red]")
+        exit(1)
+
+    model_path_deep = questionary.path(
+        "Deep-thinking model (.gguf):",
+        validate=lambda p: p.strip().endswith(".gguf") or "Must be a .gguf file",
+        style=questionary.Style([("text", "fg:green"), ("highlighted", "noinherit")]),
+    ).ask()
+    if not model_path_deep:
+        console.print("[red]No model path provided. Exiting...[/red]")
+        exit(1)
+
+    gpu_choice = questionary.select(
+        "GPU layer offloading:",
+        choices=[
+            questionary.Choice("All layers to GPU (fastest, needs VRAM)", value=-1),
+            questionary.Choice("CPU only (no GPU required)", value=0),
+            questionary.Choice("Custom number of layers", value="custom"),
+        ],
+        style=questionary.Style([
+            ("selected", "fg:cyan noinherit"),
+            ("highlighted", "fg:cyan noinherit"),
+            ("pointer", "fg:cyan noinherit"),
+        ]),
+    ).ask()
+
+    if gpu_choice == "custom":
+        n_gpu_layers = int(questionary.text(
+            "Number of GPU layers:",
+            validate=lambda x: x.isdigit() or "Must be a number",
+        ).ask() or "0")
+    else:
+        n_gpu_layers = gpu_choice if gpu_choice is not None else -1
+
+    ctx_choice = questionary.select(
+        "Context window size:",
+        choices=[
+            questionary.Choice("4096 (default, low memory)", value=4096),
+            questionary.Choice("8192 (moderate)", value=8192),
+            questionary.Choice("16384 (large, more memory)", value=16384),
+            questionary.Choice("32768 (maximum, high memory)", value=32768),
+        ],
+        style=questionary.Style([
+            ("selected", "fg:cyan noinherit"),
+            ("highlighted", "fg:cyan noinherit"),
+            ("pointer", "fg:cyan noinherit"),
+        ]),
+    ).ask()
+
+    return {
+        "model_path_quick": model_path_quick.strip(),
+        "model_path_deep": model_path_deep.strip(),
+        "n_gpu_layers": n_gpu_layers,
+        "n_ctx": ctx_choice or 4096,
+    }
+
+
+def check_local_readiness(provider: str) -> None:
+    """Validate local inference prerequisites before starting analysis."""
+    from tradingagents.llm_clients.local_utils import check_ollama_health
+
+    if provider == "ollama":
+        healthy, msg = check_ollama_health()
+        if not healthy:
+            console.print(f"[red]Ollama check failed: {msg}[/red]")
+            console.print("[yellow]Start Ollama with: ollama serve[/yellow]")
+            exit(1)
+        console.print(f"[green]{msg}[/green]")
 
 
 def ask_gemini_thinking_config() -> str | None:
