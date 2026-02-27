@@ -129,12 +129,86 @@ export OPENROUTER_API_KEY=...      # OpenRouter
 export ALPHA_VANTAGE_API_KEY=...   # Alpha Vantage
 ```
 
-For local models, configure Ollama with `llm_provider: "ollama"` in your config.
-
 Alternatively, copy `.env.example` to `.env` and fill in your keys:
 ```bash
 cp .env.example .env
 ```
+
+### Local Inference with Ollama (no API key needed)
+
+You can run TradingAgents entirely on your own GPU using [Ollama](https://ollama.com/).
+A single **RTX 4090 (24 GB VRAM)** can run the full pipeline with quantized models.
+
+#### 1. Install Ollama
+
+**Option A — Official installer (requires sudo):**
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+```
+
+**Option B — User-space install (no sudo):**
+```bash
+mkdir -p ~/ollama-install && cd ~/ollama-install
+curl -L -o /tmp/ollama.tar.zst \
+  https://github.com/ollama/ollama/releases/latest/download/ollama-linux-amd64.tar.zst
+tar --zstd -xf /tmp/ollama.tar.zst
+```
+This places the binary at `~/ollama-install/bin/ollama` and CUDA runner libs under `~/ollama-install/lib/ollama/cuda_v12/`.
+
+#### 2. Start the Ollama server
+
+If you used the official installer, Ollama may already be running as a service. Otherwise:
+
+```bash
+# Official install
+ollama serve
+
+# User-space install — use the included helper script for correct GPU detection
+bash scripts/start_ollama.sh
+```
+
+> **Tip:** `scripts/start_ollama.sh` automatically sets `LD_LIBRARY_PATH` so Ollama finds its CUDA runner libs. Edit the variables at the top of the script if your install directory or CUDA version differs.
+
+#### 3. Pull recommended models
+
+For a **4090 (24 GB)**, the recommended pairing is:
+
+| Role | Model | Active params | VRAM |
+|------|-------|--------------|------|
+| Quick-thinking | `qwen3:8b` | 8B | ~5 GB |
+| Deep-thinking | `qwen3:30b-a3b` | 3B (MoE) | ~18 GB |
+
+```bash
+ollama pull qwen3:8b
+ollama pull qwen3:30b-a3b
+```
+
+Lighter alternatives if VRAM is limited:
+```bash
+ollama pull qwen3:4b      # ~3 GB, ultra-light quick thinker
+ollama pull qwen3:14b     # ~9 GB, dense deep thinker
+```
+
+#### 4. Run TradingAgents with Ollama
+
+**CLI:** Run `python -m cli.main`, select **Ollama (Local)** as the provider, and pick your models.
+
+**Python:**
+```python
+from tradingagents.graph.trading_graph import TradingAgentsGraph
+from tradingagents.default_config import DEFAULT_CONFIG
+
+config = DEFAULT_CONFIG.copy()
+config["llm_provider"] = "ollama"
+config["quick_think_llm"] = "qwen3:8b"
+config["deep_think_llm"] = "qwen3:30b-a3b"
+
+ta = TradingAgentsGraph(debug=True, config=config)
+_, decision = ta.propagate("NVDA", "2026-01-15")
+print(decision)
+```
+
+> See `LOCAL_INFERENCE_GUIDE.md` for detailed architecture notes, debugging tips, and LlamaCpp (direct GGUF) usage.
 
 ### CLI Usage
 

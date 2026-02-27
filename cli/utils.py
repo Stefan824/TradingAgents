@@ -160,9 +160,9 @@ def select_shallow_thinking_agent(provider) -> str:
             ("Z.AI GLM 4.5 Air (free)", "z-ai/glm-4.5-air:free"),
         ],
         "ollama": [
-            ("Qwen3:latest (8B, local)", "qwen3:latest"),
-            ("GPT-OSS:latest (20B, local)", "gpt-oss:latest"),
-            ("GLM-4.7-Flash:latest (30B, local)", "glm-4.7-flash:latest"),
+            ("Qwen3 8B - Fast, tool-calling (recommended)", "qwen3:8b"),
+            ("Qwen3 4B - Ultra-light, ~3GB VRAM", "qwen3:4b"),
+            ("Qwen3 30B-A3B - MoE, only 3B active/token", "qwen3:30b-a3b"),
         ],
         "llamacpp (direct local)": [
             ("Qwen3-8B-Q4_K_M (~5GB, fast)", "qwen3-8b"),
@@ -232,9 +232,9 @@ def select_deep_thinking_agent(provider) -> str:
             ("NVIDIA Nemotron 3 Nano 30B (free)", "nvidia/nemotron-3-nano-30b-a3b:free"),
         ],
         "ollama": [
-            ("GLM-4.7-Flash:latest (30B, local)", "glm-4.7-flash:latest"),
-            ("GPT-OSS:latest (20B, local)", "gpt-oss:latest"),
-            ("Qwen3:latest (8B, local)", "qwen3:latest"),
+            ("Qwen3 30B-A3B - MoE reasoning, ~18GB (recommended for 4090)", "qwen3:30b-a3b"),
+            ("Qwen3 8B - Balanced, ~5GB VRAM", "qwen3:8b"),
+            ("Qwen3 14B - Dense reasoning, ~9GB VRAM", "qwen3:14b"),
         ],
         "llamacpp (direct local)": [
             ("Qwen3-30B-A3B-Q4_K_M (~18GB, MoE reasoning)", "qwen3-30b-a3b"),

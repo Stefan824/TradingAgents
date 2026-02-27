@@ -30,7 +30,7 @@ from cli.utils import (
     get_ticker, get_analysis_date, select_analysts, select_research_depth,
     select_llm_provider, select_shallow_thinking_agent, select_deep_thinking_agent,
     ask_openai_reasoning_effort, ask_gemini_thinking_config,
-    configure_local_inference, check_local_readiness, format_tool_args,
+    configure_local_inference, check_local_readiness,
 )
 from cli.announcements import fetch_announcements, display_announcements
 from cli.stats_handler import StatsCallbackHandler
