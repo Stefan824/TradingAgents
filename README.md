@@ -212,10 +212,16 @@ print(decision)
 
 ### CLI Usage
 
-You can also try out the CLI directly by running:
+After installing (`pip install -e .`), run the interactive CLI from anywhere:
+```bash
+tradingagents
+```
+
+Or equivalently, from the project root:
 ```bash
 python -m cli.main
 ```
+
 You will see a screen where you can select your desired tickers, date, LLMs, research depth, etc.
 
 <p align="center">

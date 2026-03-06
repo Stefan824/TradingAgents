@@ -467,7 +467,8 @@ def update_display(layout, spinner_text=None, stats_handler=None, start_time=Non
 def get_user_selections():
     """Get all user selections before starting the analysis display."""
     # Display ASCII art welcome message
-    with open("./cli/static/welcome.txt", "r") as f:
+    _cli_dir = Path(__file__).resolve().parent
+    with open(_cli_dir / "static" / "welcome.txt", "r") as f:
         welcome_ascii = f.read()
 
     # Create welcome box content
