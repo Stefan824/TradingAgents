@@ -1,0 +1,28 @@
+# Minimal 2-day test config for pipeline validation
+
+symbol_agent: "BTC-USD"
+symbol_deep_trading: "BTC/USDT"
+
+test_pool_start: "2025-01-01"
+test_pool_end: "2025-12-31"
+
+pilot_windows:
+  - start: "2025-02-24"
+    end: "2025-02-25"
+
+hold_position: 0.0
+
+llm_provider: "ollama"
+quick_think_llm: "qwen3:8b"
+deep_think_llm: "qwen3:8b"
+backend_url: "http://localhost:11434/v1"
+
+max_debate_rounds: 1
+max_risk_discuss_rounds: 1
+
+selected_analysts:
+  - market
+  - news
+  - fundamentals
+
+artifacts_dir: "outputs"

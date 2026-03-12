@@ -1,0 +1,48 @@
+# Agent vs Forecast Pilot Experiment Configuration
+#
+# Pre-declared pilot windows — fixed before seeing results.
+# One agent decision per calendar day; 60 total calls.
+#
+# Window selection based on 2025 BTC rolling 20-day benchmark analysis:
+#   Window 1: High-Volatility Shock — max rolling 20-day daily volatility in 2025
+#   Window 2: Bull Breakout — best rolling 20-day benchmark return in 2025
+#   Window 3: Bear Drawdown — worst rolling 20-day benchmark return in 2025
+
+symbol_agent: "BTC-USD"
+symbol_deep_trading: "BTC/USDT"
+
+test_pool_start: "2025-01-01"
+test_pool_end: "2025-12-31"
+
+pilot_windows:
+  - start: "2025-02-24"
+    end: "2025-03-15"
+  - start: "2025-04-09"
+    end: "2025-04-28"
+  - start: "2025-11-03"
+    end: "2025-11-22"
+
+# Signal mapping: tri-state (-1 sell, 0 hold, 1 buy)
+hold_position: 0.0
+
+# LLM / inference
+llm_provider: "ollama"
+quick_think_llm: "qwen3:8b"
+deep_think_llm: "qwen3:30b-a3b"
+backend_url: "http://localhost:11434/v1"
+
+# Debate rounds (keep low to limit cost)
+max_debate_rounds: 1
+max_risk_discuss_rounds: 1
+
+# Retry on transient LLM errors (e.g. hallucinated tool args)
+max_retries: 3
+
+# Analysts to include
+selected_analysts:
+  - market
+  - news
+  - fundamentals
+
+# Output
+artifacts_dir: "outputs"
