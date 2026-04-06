@@ -85,6 +85,13 @@ class GraphSetup:
             delete_nodes["fundamentals"] = create_msg_delete()
             tool_nodes["fundamentals"] = self.tool_nodes["fundamentals"]
 
+        if "model" in selected_analysts:
+            analyst_nodes["model"] = create_model_analyst(
+                self.quick_thinking_llm
+            )
+            delete_nodes["model"] = create_msg_delete()
+            tool_nodes["model"] = self.tool_nodes["model"]
+
         # Create researcher and manager nodes
         bull_researcher_node = create_bull_researcher(
             self.quick_thinking_llm, self.bull_memory
