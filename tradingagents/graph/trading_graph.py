@@ -32,6 +32,7 @@ from tradingagents.agents.utils.agent_utils import (
     get_insider_transactions,
     get_global_news
 )
+from tradingagents.agents.utils.model_metrics_tool import get_model_metrics
 
 from .conditional_logic import ConditionalLogic
 from .setup import GraphSetup
@@ -192,6 +193,12 @@ class TradingAgentsGraph:
                     get_income_statement,
                 ]
             ),
+            "model": ToolNode(
+                [
+                    # ML model metrics tool
+                    get_model_metrics,
+                ]
+            ),
         }
 
     def propagate(self, company_name, trade_date):
@@ -238,6 +245,7 @@ class TradingAgentsGraph:
             "sentiment_report": final_state["sentiment_report"],
             "news_report": final_state["news_report"],
             "fundamentals_report": final_state["fundamentals_report"],
+            "model_report": final_state.get("model_report", ""),
             "investment_debate_state": {
                 "bull_history": final_state["investment_debate_state"]["bull_history"],
                 "bear_history": final_state["investment_debate_state"]["bear_history"],
